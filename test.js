@@ -1,15 +1,13 @@
 // ログダンプテスト
+// node test.js
 
 console.log("LogDump test start.");
 
-var LogDump = require("./logdump_s98");
-
-function writePsgLog() {
-  var log = new LogDump();
-  log.init(log.LOGTYPE.S98);
+function writePsgLog(log) {
+  log.init();
 
   // デバイス追加
-  var id = log.addDevice(log.DEVICE_TYPE.PSG,log.CLOCK.BC_3M57,0);
+  var id = log.addDevice(log.DEVICE_TYPE.PSG, log.CLOCK.BC_3M57, 0);
 
   // CH.A tone = on
   log.writeValue(id,0x07,0x3e);
@@ -24,12 +22,11 @@ function writePsgLog() {
   return log;
 }
 
-function writeOpllLog() {
-  var log = new LogDump();
-  log.init(log.LOGTYPE.S98);
+function writeOpllLog(log) {
+  log.init();
 
   // デバイス追加
-  var id = log.addDevice(log.DEVICE_TYPE.OPLL,log.CLOCK.BC_3M57,0);
+  var id = log.addDevice(log.DEVICE_TYPE.OPLL, log.CLOCK.BC_3M57, 0);
 
   // inst 1 vol 3
   log.writeValue(id,0x30,0x13);
@@ -46,7 +43,7 @@ function writeOpllLog() {
 
 function writeLog(filename, log) {
   // ファイル書き込み
-  var fs = require('fs');
+  console.log("writeLog:"+filename);
   var data = new Uint8Array(log.data());
   try {
     fs.writeFileSync(filename,data);
@@ -56,8 +53,19 @@ function writeLog(filename, log) {
   }
 }
 
-writeLog("psg.s98",writePsgLog());
-writeLog("opll.s98",writeOpllLog());
+function makeData(logtype) {
+  var log = LogDump.getLogInstance(logtype);
+  var ext = log.getExtension();
+  writeLog("output/psg"+ext,writePsgLog(log));
+  writeLog("output/opll"+ext,writeOpllLog(log));  
+}
+
+var LogDump = require("./logdump");
+var fs = require('fs');
+if (!fs.existsSync("output")) fs.mkdirSync("output");
+
+makeData(LogDump.LOGTYPE.S98);
+makeData(LogDump.LOGTYPE.NLG);
 
 console.log("done.");
 
